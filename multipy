@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import os
-from multipy import node, runner, manager
+from multipylib import node, runner, manager
 
-# Se usan si no se especifican otras en la linea de comandos
+# If --host or --port are not specified, these are used instead
 MULTIPY_HOST = os.getenv('MULTIPY_HOST', '127.0.0.1')
 MULTIPY_PORT = os.getenv('MULTIPY_PORT', '3000')
 
@@ -20,15 +20,15 @@ if __name__ == '__main__':
         description='Mode of execution of multipy',
         help='are valid subcommands')
 
-    # node parser
+    # node parser (dispatchs start() on multipy/node.py file)
     parser_node = subparsers.add_parser('node')
     parser_node.set_defaults(func=node.start)
 
-    # node parser
+    # manager parser (dispatchs start() on multipy/manager.py file)
     parser_manager = subparsers.add_parser('manager')
     parser_manager.set_defaults(func=manager.start)
 
-    # node parser
+    # runner parser (dispatchs start() on multipy/runner.py file)
     parser_run = subparsers.add_parser('run')
     parser_run.add_argument(
         'file',
