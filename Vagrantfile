@@ -35,4 +35,13 @@ Vagrant.configure("2") do |config|
     #  sudo yum install nano -y
     #  sudo yum install avahi-tools avahi-ui-tools -y
     # SHELL
+    # Install python on all machines
+      config.vm.provision "shell", inline: <<-SHELL
+       sudo yum -y install yum-utils
+       sudo yum -y groupinstall development
+       sudo yum -y install https://centos7.iuscommunity.org/ius-release.rpm
+       sudo yum -y install python36u
+       sudo yum -y install python36u-pip
+       sudo yum -y install python36u-devel
+      SHELL
 end
