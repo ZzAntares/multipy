@@ -1,14 +1,13 @@
 
 # the Vagrant development environment requires a box.
-# box at  https://vagrantcloud.com/relativkreativ/boxes/centos-7-minimal/versions/1.0.5/providers/virtualbox.box
 # steps for deploy
 # 1 Download the box
-# $ wget https://vagrantcloud.com/relativkreativ/boxes/centos-7-minimal/versions/1.0.5/providers/virtualbox.box
+# $ wget https://app.vagrantup.com/centos/boxes/7/versions/1804.02/providers/virtualbox.box
 # 2 Add the box
-# $ vagrant box add multipy/centosMinimal virtualbox.box
+# $ vagrant box add multipy/CentOS-7 CentOS-7-x86_64-Vagrant-1804_02.VirtualBox.box
 # 3 Up box
-# $ vagrant up multipy/centosMinimal
-BOX_IMAGE = "multipy/centosMinimal"
+# $ vagrant up multipy/CentOS-7
+BOX_IMAGE = "multipy/CentOS-7"
 NODE_COUNT = 2
 
 Vagrant.configure("2") do |config|
@@ -37,11 +36,13 @@ Vagrant.configure("2") do |config|
     # SHELL
     # Install python on all machines
       config.vm.provision "shell", inline: <<-SHELL
+       sudo yum -y install nano wget
+       sudo yum -y install gcc make kernel-headers kernel-devel perl
        sudo yum -y install yum-utils
-       sudo yum -y groupinstall development
        sudo yum -y install https://centos7.iuscommunity.org/ius-release.rpm
        sudo yum -y install python36u
        sudo yum -y install python36u-pip
        sudo yum -y install python36u-devel
+       sudo yum -y groupinstall development
       SHELL
 end
