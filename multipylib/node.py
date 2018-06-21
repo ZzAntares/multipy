@@ -19,8 +19,7 @@ def worker(task_queue, result_queue):
     while True:
         try:
             task, kwargs = task_queue.get_nowait()
-            task_result = task(
-                **kwargs)  # Call the function with its parameters
+            task_result = task(**kwargs)  # Call function with its parameters
             result_queue.put(task_result)
         except queue.Empty:
             return
@@ -49,7 +48,7 @@ def connect_server(host, port, authkey):
     ServerManager.register('get_task_queue')
     ServerManager.register('get_result_queue')
 
-    manager = ServerManager(address=(host, port), authkey=authkey)
+    manager = ServerManager(address=(host, port), authkey=authkey.encode())
     manager.connect()
 
     print('Client connected to {}:{}'.format(host, port))

@@ -6,7 +6,7 @@ from multipylib import node, runner, manager
 # configure the main parameters of the program, but if these are not specified
 # and neither --host or --port are present, these defaults are used instead.
 MULTIPY_HOST = os.getenv('MULTIPY_HOST', '127.0.0.1')
-MULTIPY_PORT = os.getenv('MULTIPY_PORT', '3000')
+MULTIPY_PORT = os.getenv('MULTIPY_PORT', 3000)
 MULTIPY_AUTH = os.getenv('MULTIPY_AUTHKEY', 'theclusterkey')
 
 if __name__ == '__main__':
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     # Parser used to read command line arguments (CLI App framework)
     parser = argparse.ArgumentParser(description='Process tasks in cluster')
     parser.add_argument('--host', dest='host', help='Manager address')
-    parser.add_argument('--port', dest='port', help='Manager port')
+    parser.add_argument('--port', dest='port', type=int, help='Manager port')
     parser.add_argument('--key', dest='authkey', help='Manager auth key')
     parser.set_defaults(
         host=MULTIPY_HOST, port=MULTIPY_PORT, authkey=MULTIPY_AUTH)

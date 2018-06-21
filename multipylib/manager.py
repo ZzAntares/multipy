@@ -28,7 +28,7 @@ def server_manager(host, port, authkey):
     ServerManager.register('get_task_queue', callable=lambda: task_queue)
     ServerManager.register('get_result_queue', callable=lambda: result_queue)
 
-    manager = ServerManager(address=(host, port), authkey=authkey)
+    manager = ServerManager(address=(host, port), authkey=authkey.encode())
 
     manager.start()
     print('Server started at {}:{}'.format(host, port))
