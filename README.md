@@ -27,11 +27,13 @@ Por otro lado para extender el clúster bastará con ejecutar `multipy` de la
 siguiente manera:
 
 ```sh
-$ multipy node --host 10.0.0.10 --port 3000
+$ multipy node --host 10.0.0.10 --port 3000 --key secret
 ```
 
 El nodo se conectará al gestor del clúster que está ejecutándose en esa
-dirección, a partir de ahí el nodo podrá recibir tareas para procesar.
+dirección, a partir de ahí el nodo podrá recibir tareas para procesar. `--key`
+es la llave utilizada por el clúster, si es incorrecta no se podrá unir el nodo
+al clúster.
 
 ## Para iniciar un gestor para un nuevo cluster
 
@@ -42,8 +44,10 @@ a procesar y las distribuye entre todos los nodos registrados en el clúster.
 Para iniciar el gestor utilice el comando
 
 ```sh
-$ multipy manager --host 10.0.0.10 --port 3000
+$ multipy manager --host 10.0.0.10 --port 3000 --key secret
 ```
 
 Esto inicia un servidor en la dirección y puerto especificados al cual otros
 nuevos nodos pueden conectarse.
+
+El `--key` se utiliza como autenticación para unir nuevos nodos al clúster.

@@ -2,7 +2,9 @@
 import os
 from multipylib import node, runner, manager
 
-# If --host or --port are not specified, these are used instead
+# It is possible to use environment variables (those from the shell) to
+# configure the main parameters of the program, but if these are not specified
+# and neither --host or --port are present, these defaults are used instead.
 MULTIPY_HOST = os.getenv('MULTIPY_HOST', '127.0.0.1')
 MULTIPY_PORT = os.getenv('MULTIPY_PORT', '3000')
 MULTIPY_AUTH = os.getenv('MULTIPY_AUTHKEY', 'theclusterkey')
@@ -10,6 +12,7 @@ MULTIPY_AUTH = os.getenv('MULTIPY_AUTHKEY', 'theclusterkey')
 if __name__ == '__main__':
     import argparse
 
+    # Parser used to read command line arguments (CLI App framework)
     parser = argparse.ArgumentParser(description='Process tasks in cluster')
     parser.add_argument('--host', dest='host', help='Manager address')
     parser.add_argument('--port', dest='port', help='Manager port')
@@ -17,7 +20,8 @@ if __name__ == '__main__':
     parser.set_defaults(
         host=MULTIPY_HOST, port=MULTIPY_PORT, authkey=MULTIPY_AUTH)
 
-    # Allowing subcommands
+    # Add subcommands to ease the management of 'run', 'node' and 'manager'
+    # subprograms, so that each has it's own command line arguments.
     subparsers = parser.add_subparsers(
         title='Subcommands',
         description='Mode of execution of multipy',
@@ -29,13 +33,20 @@ if __name__ == '__main__':
         '--procs',
         type=int,
         nargs='?',
-        default=1,  # How to default to the number of cores in system?
+        default=1,  # TODO How to default to the number of cores in system?
         dest='procs',
         help='Number of processes to spawn in the node')
     parser_node.set_defaults(func=node.start)
 
     # manager parser (dispatchs start() on multipy/manager.py file)
     parser_manager = subparsers.add_parser('manager')
+    parser_manager.add_argument(
+        '--task-limit',
+        type=int,
+        nargs='?',
+        default=999,
+        dest='task_limit',
+        help='Limits the number of tasks allowed to put in the task queue.')
     parser_manager.set_defaults(func=manager.start)
 
     # runner parser (dispatchs start() on multipy/runner.py file)
@@ -49,4 +60,4 @@ if __name__ == '__main__':
 
     # dispatch subcommands
     args = parser.parse_args()
-    args.func(args)
+    args.func(args)  # Call the function associated with the correct subcommand

@@ -4,6 +4,21 @@ from multiprocessing.managers import SyncManager
 
 
 def server_manager(host, port, authkey):
+    """
+    This starts a server manager in the background (non blocking) that listens
+    for connections in the specified host, port and establishes
+    authentification using the provided authentification key.
+
+    Args:
+        host (str): Host to bind the server manager to.
+        post (int): Port to bind the server manager.
+        authkey (str): Auth code used for accepting new peers in the cluster.
+
+    Returns:
+        SyncManager: An instance of multiprocessing.managers.SyncManager that
+                     distributes tasks over the connected nodes.
+    """
+    # TODO Can most of this function be replaced with mutliprocessing.Manager?
     task_queue = multiprocessing.Queue()
     result_queue = multiprocessing.Queue()
 
@@ -22,6 +37,14 @@ def server_manager(host, port, authkey):
 
 
 def start(args):
+    """
+    This is the main function of this module. It uses the given args object to
+    start a server manager that handles the distributed computing cluster.
+
+    Args:
+        args: This is the argparse.Namespace object holding command line
+              arguments as attributes.
+    """
     manager = server_manager(args.host, args.port, args.authkey)
     shared_task_queue = manager.get_task_queue()
     shared_result_queue = manager.get_result_queue()
@@ -31,7 +54,7 @@ def start(args):
     shared_task_queue.put((borrame, {'num': 3}))
 
     # Wait for processing to finish
-    threshold = 999  # A limit on tasks
+    threshold = args.task_limit  # A limit on tasks
 
     while threshold > 0:
         result = shared_result_queue.get()
