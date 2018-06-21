@@ -25,6 +25,7 @@ Vagrant.configure("2") do |config|
     end
   end
 
+  config.vm.synced_folder '.', '/home/vagrant/'
   # Install avahi on all machines
   # Provisional comment because don't work <<provisional access to host is with the ip>>
     # config.vm.provision "shell", inline: <<-SHELL
@@ -35,14 +36,20 @@ Vagrant.configure("2") do |config|
     #  sudo yum install avahi-tools avahi-ui-tools -y
     # SHELL
     # Install python on all machines
-      config.vm.provision "shell", inline: <<-SHELL
-       sudo yum -y install nano wget
-       sudo yum -y install gcc make kernel-headers kernel-devel perl
-       sudo yum -y install yum-utils
-       sudo yum -y install https://centos7.iuscommunity.org/ius-release.rpm
-       sudo yum -y install python36u
-       sudo yum -y install python36u-pip
-       sudo yum -y install python36u-devel
-       sudo yum -y groupinstall development
-      SHELL
+  config.vm.provision "shell", inline: <<-SHELL
+    # Install VirtualBox guest additions
+    ARCH=`uname -r | cut -f7 -d.`
+    KVER=`uname -r | cut -f1-6 -d.`
+    yum -y install wget nano gcc make kernel-devel-${KVER}.${ARCH}
+    sudo cd /opt && sudo wget http://download.virtualbox.org/virtualbox/5.2.12/VBoxGuestAdditions_5.2.12.iso -O /opt/VBGAdd.iso
+    sudo mount /opt/VBGAdd.iso -o loop /mnt
+    sudo sh /mnt/VBoxLinuxAdditions.run --nox11
+    sudo umount /mnt
+    sudo rm /opt/VBGAdd.iso
+
+    # Install Python 3
+    sudo yum -y install https://centos7.iuscommunity.org/ius-release.rpm
+    sudo yum -y install python36u python36u-pip
+    sudo ln -s python3.6 /usr/bin/python3
+  SHELL
 end
