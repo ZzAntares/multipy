@@ -25,6 +25,13 @@ if __name__ == '__main__':
 
     # node parser (dispatchs start() on multipy/node.py file)
     parser_node = subparsers.add_parser('node')
+    parser_node.add_argument(
+        '--procs',
+        type=int,
+        nargs='?',
+        default=1,  # How to default to the number of cores in system?
+        dest='procs',
+        help='Number of processes to spawn in the node')
     parser_node.set_defaults(func=node.start)
 
     # manager parser (dispatchs start() on multipy/manager.py file)
