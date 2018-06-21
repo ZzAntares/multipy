@@ -53,6 +53,7 @@ def start(args):
     # Pass the function reference, and its arguments in a pair
     shared_task_queue.put((borrame, {'num': 3}))
 
+    # TODO Instead of task limit one could use Queue's task_done() and join()?
     # Wait for processing to finish
     threshold = args.task_limit  # A limit on tasks
 

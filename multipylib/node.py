@@ -18,7 +18,7 @@ def worker(task_queue, result_queue):
     # Run until task_queue is empty
     while True:
         try:
-            task, kwargs = task_queue.get_nowait()
+            task, kwargs = task_queue.get()
             task_result = task(**kwargs)  # Call function with its parameters
             result_queue.put(task_result)
         except queue.Empty:
