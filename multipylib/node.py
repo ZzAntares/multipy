@@ -18,8 +18,13 @@ def worker(task_queue, result_queue):
     # Run until task_queue is empty
     while True:
         try:
-            task, kwargs = task_queue.get()
-            task_result = task(**kwargs)  # Call function with its parameters
+            bindings = {}
+            code, args = task_queue.get()
+
+            exec(code, bindings)  # The code was validated by the runner
+            task = bindings['main']
+            task_result = task(args)  # Call function with its parameters
+
             result_queue.put(task_result)
         except queue.Empty:
             return
@@ -69,6 +74,7 @@ def start(args):
     task_queue = manager.get_task_queue()
     result_queue = manager.get_result_queue()
 
+    # TODO Use a multiprocessing.Pool instead of a list
     # Start to run a worker per process
     procs = []
     for _ in range(args.procs):
