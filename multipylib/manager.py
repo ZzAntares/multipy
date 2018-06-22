@@ -1,6 +1,8 @@
 import time
+import pickle
 import multiprocessing
 from multiprocessing.managers import SyncManager
+from .queues import RedisQueue
 
 
 def server_manager(host, port, authkey):
@@ -50,8 +52,10 @@ def start(args):
     shared_result_queue = manager.get_result_queue()
 
     # Get a reference to the function to process somehow
-    # Pass the function reference, and its arguments in a pair
-    shared_task_queue.put((borrame, {'num': 3}))
+    q = RedisQueue(args.authkey, host=args.host)
+    source_codes, kwargs = pickle.loads(q.get())
+    for code in source_codes:
+        shared_task_queue.put((code, kwargs))
 
     # TODO Instead of task limit one could use Queue's task_done() and join()?
     # Wait for processing to finish
