@@ -29,9 +29,13 @@ def worker(task_queue, result_queue):
 
             code, args = data
 
-            exec(code, bindings)  # The code was validated by the runner
-            task = bindings['main']
-            task_result = task(args)  # Call function with its parameters
+            try:
+                exec(code, bindings)  # The code was validated by the runner
+                task = bindings['main']
+                task_result = task(args)  # Call function with its parameters
+            except Exception as e:
+                task_result = '[WORKER] Got an error:\n\t{}\n\n{}'.format(
+                    str(e), repr(e))
 
             result_queue.put(task_result)
     except EOFError:
