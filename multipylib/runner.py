@@ -36,10 +36,6 @@ def start(args):
               arguments as attributes.
     """
     # Clean the argumets because some fields can't be easily serialized
-    kwargs = vars(args).copy()
-    del kwargs['file']
-    del kwargs['func']
-
     validated = validate_file(args.file)
 
     if validated is None:
@@ -47,7 +43,7 @@ def start(args):
         return
 
     q = RedisQueue(args.authkey, host=args.host)
-    q.put(pickle.dumps((validated, kwargs)))  # Just send one code for now
+    q.put(pickle.dumps((validated, args.args)))  # Just send one code for now
 
     print('Files were sent to compile:', args.file.name)
 
@@ -55,4 +51,5 @@ def start(args):
     result = rq.get()
 
     print('====== RESULT ======')
-    print(result.decode(), '\n\n')
+    print(result.decode())
+    print('====================\n\n')

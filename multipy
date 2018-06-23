@@ -55,6 +55,10 @@ if __name__ == '__main__':
         'file',
         type=argparse.FileType('r'),
         help='Python file with main() to execute')
+    parser_run.add_argument(
+        'args',
+        nargs=argparse.REMAINDER,
+        help='Other arguments to pass to your program')
     parser_run.set_defaults(func=runner.start)
 
     # dispatch subcommands
