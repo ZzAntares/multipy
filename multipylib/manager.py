@@ -2,7 +2,31 @@ import time
 import pickle
 import multiprocessing
 from multiprocessing.managers import SyncManager
+from .common import QueueFinished
 from .queues import RedisQueue
+
+
+def results_handler(results_queue, report_queue):
+    """
+    This should run as a separate process. Its only job is to read the results
+    queue (those comming from the worker node) and pass the results to the
+    redis reults queue (so the runner can retrieve the results).
+
+    Args:
+        results_queue (Queue): A multiprocessing queue used to retrieve results
+                               from node to manager process.
+        report_queue (RedisQueue): Used to pass the incomming result from the
+                                   manager to the runner.
+    """
+    # TODO It is possible that the report queue should be locked
+    while True:
+        result = results_queue.get()
+
+        # TODO If worker puts None, then this would terminate!
+        if isinstance(result, QueueFinished):
+            return  # Terminate process safely
+
+        report_queue.put(result)
 
 
 def server_manager(host, port, authkey):
@@ -26,6 +50,8 @@ def server_manager(host, port, authkey):
 
     class ServerManager(SyncManager):
         pass
+
+    # TODO Shouldn't be possible to create Queues using the SyncManager.Queue?
 
     ServerManager.register('get_task_queue', callable=lambda: task_queue)
     ServerManager.register('get_result_queue', callable=lambda: result_queue)
@@ -53,21 +79,26 @@ def start(args):
 
     # Get a reference to the function to process somehow
     q = RedisQueue(args.authkey, host=args.host)
-    source_codes, kwargs = pickle.loads(q.get())
-    for code in source_codes:
-        shared_task_queue.put((code, kwargs))
+    rq = RedisQueue(args.authkey, host=args.host, namespace='queue:results')
 
-    # TODO Instead of task limit one could use Queue's task_done() and join()?
-    # Wait for processing to finish
-    threshold = args.task_limit  # A limit on tasks
+    # Fire a process/thread that is constantly fetching from the result queue
+    # And sending it to the runner via another queue
+    p = multiprocessing.Process(
+        target=results_handler, args=(shared_result_queue, rq))
+    p.start()
 
-    while threshold > 0:
-        result = shared_result_queue.get()
-        print('The result is: ', result)  # Give back results to runner somehow
-        threshold -= 1
-
-    time.sleep(2)
-    manager.shutdown()
+    try:
+        while True:
+            source_codes, kwargs = pickle.loads(q.get())
+            for code in source_codes:
+                shared_task_queue.put((code, kwargs))
+    except KeyboardInterrupt:
+        shared_task_queue.put(QueueFinished())
+        shared_result_queue.put(QueueFinished())
+        # send signal to nodes to stop (queue close? that also signals p)
+        # send signal to stop process p
+        time.sleep(3)  # Give time so that p gracefully quits (use join?)
+        manager.shutdown()
 
 
 def borrame(num):

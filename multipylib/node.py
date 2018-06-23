@@ -1,6 +1,7 @@
 import multiprocessing
 import queue
 from multiprocessing.managers import SyncManager
+from .common import QueueFinished
 
 
 def worker(task_queue, result_queue):
@@ -16,18 +17,26 @@ def worker(task_queue, result_queue):
                       placed, where will be read by the server manager.
     """
     # Run until task_queue is empty
-    while True:
-        try:
+    try:
+        while True:
             bindings = {}
-            code, args = task_queue.get()
+            data = task_queue.get()
+
+            if isinstance(data, QueueFinished):
+                # Gracefuly quit process
+                task_queue.put(data)  # Allow other nodes to terminate
+                return
+
+            code, args = data
 
             exec(code, bindings)  # The code was validated by the runner
             task = bindings['main']
             task_result = task(args)  # Call function with its parameters
 
             result_queue.put(task_result)
-        except queue.Empty:
-            return
+    except EOFError:
+        # Server closed the connection
+        return
 
 
 def connect_server(host, port, authkey):
