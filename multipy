@@ -33,7 +33,7 @@ if __name__ == '__main__':
         '--procs',
         type=int,
         nargs='?',
-        default=1,  # TODO How to default to the number of cores in system?
+        default=os.cpu_count(),  # This may not be the allowed cores to use
         dest='procs',
         help='Number of processes to spawn in the node')
     parser_node.set_defaults(func=node.start)

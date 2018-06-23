@@ -1,5 +1,5 @@
+import os
 import multiprocessing
-import queue
 from multiprocessing.managers import SyncManager
 from .common import QueueFinished
 
@@ -20,13 +20,17 @@ def worker(task_queue, result_queue):
     try:
         while True:
             bindings = {}
+            print('[WORKER #{}] Waiting for tasks ...'.format(os.getpid()))
             data = task_queue.get()
 
             if isinstance(data, QueueFinished):
                 # Gracefuly quit process
                 task_queue.put(data)  # Allow other nodes to terminate
+                print('[WORKER #{}] Gracefuly quitting ...'.format(
+                    os.getpid()))
                 return
 
+            print('[WORKER #{}] Got a new job! ...'.format(os.getpid()))
             code, args = data
 
             try:
@@ -37,9 +41,12 @@ def worker(task_queue, result_queue):
                 task_result = '[WORKER] Got an error:\n\t{}\n\n{}'.format(
                     str(e), repr(e))
 
+            print('[WORKER #{}] done!'.format(os.getpid()))
             result_queue.put(task_result)
     except EOFError:
         # Server closed the connection
+        print('[WORKER #{}] Connection closed, terminating...'.format(
+            os.getpid()))
         return
 
 

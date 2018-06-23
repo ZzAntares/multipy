@@ -48,6 +48,7 @@ def start(args):
     print('Files were sent to compile:', args.file.name)
 
     rq = RedisQueue(args.authkey, host=args.host, namespace='queue:results')
+    print('Waiting for result ...\n')
     result = rq.get()
 
     print('====== RESULT ======')
