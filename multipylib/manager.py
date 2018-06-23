@@ -18,14 +18,17 @@ def results_handler(results_queue, report_queue):
         report_queue (RedisQueue): Used to pass the incomming result from the
                                    manager to the runner.
     """
-    # TODO It is possible that the report queue should be locked
-    while True:
-        result = results_queue.get()
+    try:
+        # TODO It is possible that the report queue should be locked
+        while True:
+            result = results_queue.get()
 
-        if isinstance(result, QueueFinished):
-            return  # Terminate process safely
+            if isinstance(result, QueueFinished):
+                return  # Terminate process safely
 
-        report_queue.put(result)
+            report_queue.put(result)
+    except KeyboardInterrupt:
+        return
 
 
 def server_manager(host, port, authkey):
@@ -91,9 +94,8 @@ def start(args):
             # Retrieve, unserialize and put in the task queue the user code
             shared_task_queue.put(pickle.loads(q.get()))
     except KeyboardInterrupt:
-        shared_task_queue.put(QueueFinished())
-        shared_result_queue.put(QueueFinished())
-        # send signal to nodes to stop (queue close? that also signals p)
-        # send signal to stop process p
-        time.sleep(3)  # Give time so that p gracefully quits (use join?)
-        manager.shutdown()
+        print('Quitting...')
+        time.sleep(2)  # Give time so that workers gracefully quits
+
+    p.join()  # If result handler has not terminated wait for it
+    manager.shutdown()  # Shutdown manager server

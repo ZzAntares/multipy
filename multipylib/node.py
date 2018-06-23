@@ -92,6 +92,14 @@ def start(args):
         procs.append(p)
         p.start()
 
-    # Wait for all workers to finish before terminating the main process
-    for p in procs:
-        p.join()
+    try:
+        # Wait for all workers to finish before terminating the main process
+        for p in procs:
+            p.join()
+    except KeyboardInterrupt:
+        # Put the p.pid in the QueueFinished
+        # The worker checks if is his pid if it is then terminates
+        # if not then puts back the message in the queue and keeps running
+        print('Quitting ...')
+        for p in procs:
+            p.terminate()
