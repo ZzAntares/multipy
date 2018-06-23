@@ -1,4 +1,5 @@
 import pickle
+import traceback
 from .queues import RedisQueue
 
 
@@ -20,7 +21,8 @@ def validate_file(file):
         compile(testContent, "<string>", 'exec')  # Used just for validation
         return testContent
     except Exception:
-        print('Your code is not valid python3 code')
+        print('==== Your code is not valid python3 code ====')
+        traceback.print_exc()  # Print the error to the user
         return
 
 
@@ -38,15 +40,19 @@ def start(args):
     del kwargs['file']
     del kwargs['func']
 
-    files_compiles = []
-    # For each file, it is sent to validate
-    for file in args.file:
-        validated = validate_file(file)
-        # just add the files you compile to the list
-        if validated is not None:
-            files_compiles.append(validated)
+    validated = validate_file(args.file)
+
+    if validated is None:
+        # Will not send code that is not valid
+        return
 
     q = RedisQueue(args.authkey, host=args.host)
-    q.put(pickle.dumps((files_compiles, kwargs)))  # Just send one code for now
+    q.put(pickle.dumps((validated, kwargs)))  # Just send one code for now
 
-    print('Files were sent to compile:', files_compiles)
+    print('Files were sent to compile:', args.file.name)
+
+    rq = RedisQueue(args.authkey, host=args.host, namespace='queue:results')
+    result = rq.get()
+
+    print('====== RESULT ======')
+    print(result.decode(), '\n\n')

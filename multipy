@@ -53,7 +53,6 @@ if __name__ == '__main__':
     parser_run = subparsers.add_parser('run')
     parser_run.add_argument(
         'file',
-        nargs='+',
         type=argparse.FileType('r'),
         help='Python file with main() to execute')
     parser_run.set_defaults(func=runner.start)

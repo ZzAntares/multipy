@@ -22,7 +22,6 @@ def results_handler(results_queue, report_queue):
     while True:
         result = results_queue.get()
 
-        # TODO If worker puts None, then this would terminate!
         if isinstance(result, QueueFinished):
             return  # Terminate process safely
 
@@ -89,9 +88,8 @@ def start(args):
 
     try:
         while True:
-            source_codes, kwargs = pickle.loads(q.get())
-            for code in source_codes:
-                shared_task_queue.put((code, kwargs))
+            # Retrieve, unserialize and put in the task queue the user code
+            shared_task_queue.put(pickle.loads(q.get()))
     except KeyboardInterrupt:
         shared_task_queue.put(QueueFinished())
         shared_result_queue.put(QueueFinished())
@@ -99,11 +97,3 @@ def start(args):
         # send signal to stop process p
         time.sleep(3)  # Give time so that p gracefully quits (use join?)
         manager.shutdown()
-
-
-def borrame(num):
-    """
-    This is a sample function task, this should be the function that has been
-    read from the file.
-    """
-    return num * num
