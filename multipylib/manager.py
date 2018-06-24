@@ -91,8 +91,9 @@ def start(args):
 
     try:
         while True:
-            # Retrieve, unserialize and put in the task queue the user code
-            shared_task_queue.put(pickle.loads(q.get()))
+            code, params = pickle.loads(q.get())
+            # Divide the task into multiple tasks for various nodes
+            shared_task_queue.put((code, params))
     except KeyboardInterrupt:
         print('Quitting...')
         time.sleep(2)  # Give time so that workers gracefully quits

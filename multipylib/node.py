@@ -1,53 +1,22 @@
 import os
 import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
 from multiprocessing.managers import SyncManager
 from .common import QueueFinished
 
 
-def worker(task_queue, result_queue):
-    """
-    The worker function that runs until there are no more tasks to process,
-    this reads the task queue, executes the retrieved function and places the
-    result in the result queue.
-
-    Args:
-        task_queue: A shared multiprocessing.Queue where jobs to process are
-                    placed by the server manager.
-        result_queue: A shared multiprocessing.Queue where results of jobs are
-                      placed, where will be read by the server manager.
-    """
-    # Run until task_queue is empty
+def runner_task(data):
+    bindings = {}
+    code, param = data
+    # TODO Return exist status of computation for better error handling
     try:
-        while True:
-            bindings = {}
-            print('[WORKER #{}] Waiting for tasks ...'.format(os.getpid()))
-            data = task_queue.get()
-
-            if isinstance(data, QueueFinished):
-                # Gracefuly quit process
-                task_queue.put(data)  # Allow other nodes to terminate
-                print('[WORKER #{}] Gracefuly quitting ...'.format(
-                    os.getpid()))
-                return
-
-            print('[WORKER #{}] Got a new job! ...'.format(os.getpid()))
-            code, args = data
-
-            try:
-                exec(code, bindings)  # The code was validated by the runner
-                task = bindings['main']
-                task_result = task(args)  # Call function with its parameters
-            except Exception as e:
-                task_result = '[WORKER] Got an error:\n\t{}\n\n{}'.format(
-                    str(e), repr(e))
-
-            print('[WORKER #{}] done!'.format(os.getpid()))
-            result_queue.put(task_result)
-    except EOFError:
-        # Server closed the connection
-        print('[WORKER #{}] Connection closed, terminating...'.format(
-            os.getpid()))
-        return
+        exec(code, bindings)  # code was validated by the runner
+        task = bindings['main']  # Extract the "main" function
+        print('[WORKER #{}] Task is extracted and ready.'.format(os.getpid()))
+        return task(param)
+    except Exception as e:
+        return "[WORKER] Got an error:\n\t{}\n\n{}".format(str(e), repr(e))
 
 
 def connect_server(host, port, authkey):
@@ -94,23 +63,39 @@ def start(args):
     task_queue = manager.get_task_queue()
     result_queue = manager.get_result_queue()
 
-    # TODO Use a multiprocessing.Pool instead of a list
-    # Start to run a worker per process
-    procs = []
-    for _ in range(args.procs):
-        p = multiprocessing.Process(
-            target=worker, args=(task_queue, result_queue))
-        procs.append(p)
-        p.start()
+    with ProcessPoolExecutor(max_workers=args.procs) as pool:
+        try:
+            # TODO This could be refactored using a functional style
+            #      A function that accepts the function that executes the pool
+            while True:
+                print('Waiting for tasks ...')
+                data = task_queue.get()
 
-    try:
-        # Wait for all workers to finish before terminating the main process
-        for p in procs:
-            p.join()
-    except KeyboardInterrupt:
-        # Put the p.pid in the QueueFinished
-        # The worker checks if is his pid if it is then terminates
-        # if not then puts back the message in the queue and keeps running
-        print('Quitting ...')
-        for p in procs:
-            p.terminate()
+                if isinstance(data, QueueFinished):  # Gracefuly quit process
+                    task_queue.put(data)
+                    print('Gracefuly quitting ...')
+                    return
+
+                code, params = data
+                print('Got a new job! ...')
+
+                # Divide the parameter list, so each process runs a piece
+                chunksize = round(len(params) / args.procs)
+                minitasks = zip([code] * len(params), params)
+
+                # TODO Maybe it needs to convert from iterator to list
+                task_results = list(
+                    pool.map(runner_task, minitasks, chunksize=chunksize))
+
+                result_queue.put(task_results)
+                print('done!')
+
+        # TODO Maybe this is not catched since is inside the pool
+        except BrokenProcessPool:
+            print('Process pool broke, a worker died and could not recover.')
+
+        except EOFError:
+            print('Connection closed, terminating...')  # Server was closed
+
+        except KeyboardInterrupt:
+            print('Quitting ...')

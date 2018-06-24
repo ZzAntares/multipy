@@ -45,7 +45,7 @@ def start(args):
     q = RedisQueue(args.authkey, host=args.host)
     q.put(pickle.dumps((validated, args.args)))  # Just send one code for now
 
-    print('Files were sent to compile:', args.file.name)
+    print('File sent to compile:', args.file.name)
 
     rq = RedisQueue(args.authkey, host=args.host, namespace='queue:results')
     print('Waiting for result ...\n')
