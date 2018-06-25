@@ -1,6 +1,5 @@
 import pickle
 import traceback
-from multiprocessing import Process
 from .queues import RedisQueue
 
 
@@ -50,13 +49,15 @@ def start(args):
     print('File sent to compile:', args.file.name)
     print('Waiting for results ...\n')
 
-    print('====== RESULT ======')
+    print('====== RESULTS ======')
     while True:
-        result = rq.get(timeout=5)
+        data = rq.get(timeout=5)
 
-        if result is None:
+        if data is None:
             break
 
-        print(result.decode())
+        results = pickle.loads(data)
+        for result in results:
+            print(result)
 
-    print('====================')
+    print('=====================')

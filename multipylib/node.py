@@ -14,9 +14,11 @@ def runner_task(data):
         exec(code, bindings)  # code was validated by the runner
         task = bindings['main']  # Extract the "main" function
         print('[WORKER #{}] Task is extracted and ready.'.format(os.getpid()))
-        return task(param)
+        result = task(param)
+        return {'args': param, 'result': result, 'success': True}
     except Exception as e:
-        return "[WORKER] Got an error:\n\t{}\n\n{}".format(str(e), repr(e))
+        msg = "[WORKER] Got an error:\n\t{}\n\n{}".format(str(e), repr(e))
+        return {'args': param, 'result': msg, 'success': False}
 
 
 def connect_server(host, port, authkey):

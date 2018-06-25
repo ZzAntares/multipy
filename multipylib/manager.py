@@ -26,7 +26,7 @@ def results_handler(results_queue, report_queue):
             if isinstance(result, QueueFinished):
                 return  # Terminate process safely
 
-            report_queue.put(result)
+            report_queue.put(pickle.dumps(result))
     except KeyboardInterrupt:
         return
 
