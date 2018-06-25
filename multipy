@@ -14,9 +14,11 @@ if __name__ == '__main__':
 
     # Parser used to read command line arguments (CLI App framework)
     parser = argparse.ArgumentParser(description='Process tasks in cluster')
-    parser.add_argument('--host', dest='host', help='Manager address')
+    parser.add_argument(
+        '--host', dest='host', type=str, help='Manager address')
     parser.add_argument('--port', dest='port', type=int, help='Manager port')
-    parser.add_argument('--key', dest='authkey', help='Manager auth key')
+    parser.add_argument(
+        '--key', dest='authkey', type=str, help='Manager auth key')
     parser.set_defaults(
         host=MULTIPY_HOST, port=MULTIPY_PORT, authkey=MULTIPY_AUTH)
 
@@ -41,12 +43,12 @@ if __name__ == '__main__':
     # manager parser (dispatchs start() on multipy/manager.py file)
     parser_manager = subparsers.add_parser('manager')
     parser_manager.add_argument(
-        '--task-limit',
+        '--workers',
         type=int,
         nargs='?',
-        default=999,
-        dest='task_limit',
-        help='Limits the number of tasks allowed to put in the task queue.')
+        default=1,
+        dest='workers_count',
+        help='# of worker nodes allowed to use for processing a single task.')
     parser_manager.set_defaults(func=manager.start)
 
     # runner parser (dispatchs start() on multipy/runner.py file)
