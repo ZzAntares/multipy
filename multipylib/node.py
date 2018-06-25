@@ -63,8 +63,8 @@ def start(args):
     task_queue = manager.get_task_queue()
     result_queue = manager.get_result_queue()
 
-    with ProcessPoolExecutor(max_workers=args.procs) as pool:
-        try:
+    try:
+        with ProcessPoolExecutor(max_workers=args.procs) as pool:
             # TODO This could be refactored using a functional style
             #      A function that accepts the function that executes the pool
             while True:
@@ -90,12 +90,13 @@ def start(args):
                 result_queue.put(task_results)
                 print('done!')
 
-        # TODO Maybe this is not catched since is inside the pool
-        except BrokenProcessPool:
-            print('Process pool broke, a worker died and could not recover.')
+    # TODO Use signals instead? https://docs.python.org/3.6/library/signal.html
+    # TODO Maybe this is not catched since is inside the pool
+    except BrokenProcessPool:
+        print('Process pool broke, a worker died and could not recover.')
 
-        except EOFError:
-            print('Connection closed, terminating...')  # Server was closed
+    except EOFError:
+        print('Connection closed, terminating...')  # Server was closed
 
-        except KeyboardInterrupt:
-            print('Quitting ...')
+    except KeyboardInterrupt:
+        print('Quitting ...')
