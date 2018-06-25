@@ -92,8 +92,19 @@ def start(args):
     try:
         while True:
             code, params = pickle.loads(q.get())
+
             # Divide the task into multiple tasks for various nodes
-            shared_task_queue.put((code, params))
+            # Yield successive n-sized chunks from lst.
+            def chunks(lst, n):
+                for i in range(0, len(lst), n):
+                    yield lst[i:i + n]
+
+            chunksize = round(len(params) / args.workers_count)
+            miniparams = list(chunks(params, chunksize))
+            minitasks = zip([code] * len(miniparams), miniparams)
+
+            for task in minitasks:
+                shared_task_queue.put(task)
     except KeyboardInterrupt:
         print('Quitting...')
         time.sleep(2)  # Give time so that workers gracefully quits
