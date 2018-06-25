@@ -1,5 +1,6 @@
 import pickle
 import traceback
+from multiprocessing import Process
 from .queues import RedisQueue
 
 
@@ -42,22 +43,20 @@ def start(args):
         # Will not send code that is not valid
         return
 
+    rq = RedisQueue(args.authkey, host=args.host, namespace='queue:results')
     q = RedisQueue(args.authkey, host=args.host)
     q.put(pickle.dumps((validated, args.args)))  # Just send one code for now
 
     print('File sent to compile:', args.file.name)
-
-    rq = RedisQueue(args.authkey, host=args.host, namespace='queue:results')
-    print('Waiting for result ...\n')
-
-    results = []
-    while True:
-        result = rq.get(timeout=5)
-        if result is None:
-            break
-        results.append(result)
+    print('Waiting for results ...\n')
 
     print('====== RESULT ======')
-    for result in results:
+    while True:
+        result = rq.get(timeout=5)
+
+        if result is None:
+            break
+
         print(result.decode())
-    print('====================\n\n')
+
+    print('====================')
