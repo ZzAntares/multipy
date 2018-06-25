@@ -49,8 +49,15 @@ def start(args):
 
     rq = RedisQueue(args.authkey, host=args.host, namespace='queue:results')
     print('Waiting for result ...\n')
-    result = rq.get()
+
+    results = []
+    while True:
+        result = rq.get(timeout=5)
+        if result is None:
+            break
+        results.append(result)
 
     print('====== RESULT ======')
-    print(result.decode())
+    for result in results:
+        print(result.decode())
     print('====================\n\n')
