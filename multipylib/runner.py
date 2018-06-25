@@ -49,15 +49,17 @@ def start(args):
     print('File sent to compile:', args.file.name)
     print('Waiting for results ...\n')
 
+    i = len(args.args)
     print('====== RESULTS ======')
     while True:
-        data = rq.get(timeout=5)
-
-        if data is None:
-            break
+        data = rq.get()
 
         results = pickle.loads(data)
         for result in results:
+            i -= 1
             print(result)
+
+        if i <= 0:  # No more results
+            break
 
     print('=====================')
